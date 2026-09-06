@@ -294,9 +294,10 @@ TracePathResult PathTracer::TracePath(
       p_criterionBracket(x, u);
     }
 
-    if (newton) {
+    const double diff = p_criterion(u, newT) - p_criterion(x, t);
+    if (newton && std::abs(diff) > c_newtonTol) {
       // Newton-type steplength adaptation, secant method
-      h *= -p_criterion(u, newT) / (p_criterion(u, newT) - p_criterion(x, t));
+      h *= -p_criterion(u, newT) / diff;
     }
     else {
       // Standard steplength adaptation
@@ -392,7 +393,7 @@ PolishResult PolishPoint(std::function<void(const Vector<double> &, Vector<doubl
 
   // Checking that the profile satisfies the system of equations
   for (size_t i = 1; i <= N; ++i) {
-    if (std::abs(y[i]) > eq_tol) {
+    if (std::abs(y[i]) > eq_tol || std::isnan(y[i]) || std::isinf(y[i])) {
       x = original_x;
       return {x, false, "Polishing converged to an invalid mathematical state. Reverted.", steps};
     }
